@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import ProfileForm, UserCreationForm
-from .viroonga.collections import CollectionsList
+from .lib.collections import CollectionsList
 
 # Create your views here.
 def index(request):
@@ -13,6 +13,8 @@ def index(request):
 
 def status(request):
     colls = CollectionsList()
+    for msg in colls.messages:
+        messages.info(request,msg)
     return render(request, 'status.html', {'collection_list': colls})
 
 def signup(request):

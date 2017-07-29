@@ -1,8 +1,9 @@
 
-from service import settings
 import requests
+from ..apps import AppConfig
 
-solr_url = settings.SOLR_URL
+
+solr_url = AppConfig.solr_url
 create_command = solr_url + '/admin/collections?action=CREATE&name=%s&numShards=1&replicationFactor=1&collection.configName=default'
 exists_url = solr_url + '/%s/select?indent=on&q=*:*&wt=json&rows=0'
 
@@ -17,15 +18,15 @@ class CollectionsList:
     def load_collections(self, as_dict):
         self.collections = []
         self.messages = []
-        for coll in settings.DEFAULT_SOLR_COLLECTIONS:
+        for coll in AppConfig.solr_collections:
             coll_obj = Collection()
-            coll_obj.name = settings.ORG_NAME + coll
+            coll_obj.name = AppConfig.org_name + coll
             # check if the collection exists
-            exists = exists_url % (settings.ORG_NAME + coll)
+            exists = exists_url % (AppConfig.org_name + coll)
             r = requests.get(exists)
             if r.status_code == 404:
-                self.messages.append("Collection %s does not exist... Creating. \n" % (coll))
-                cmd = create_command % (settings.ORG_NAME + coll)
+                self.messages.append("Collection %s does not exist... Creating. \n" % (AppConfig.org_name + coll))
+                cmd = create_command % (AppConfig.org_name + coll)
                 r = requests.get(cmd)
                 self.messages.append("Collection create command has returned status code: %d" % (r.status_code))
 

@@ -12,4 +12,5 @@ urlpatterns = [
     url(r'^profile/$', views.profile, name='profile'),
     url(r'^update_profile/$', views.update_profile, name='update_profile'),
     url(r'^api/status/$', api_views.api_status, name='status-api'),
+    url(r'^api/query/$', api_views.api_query, name='query-api'),
 ]

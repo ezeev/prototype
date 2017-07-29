@@ -12,14 +12,6 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 
-ORG_NAME = 'acme'
-SOLR_URL = 'http://localhost:8983/solr'
-DEFAULT_SOLR_COLLECTIONS = [
-    '_item_train',
-    '_items',
-    '_logs',
-]
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
