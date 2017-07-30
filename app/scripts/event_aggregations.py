@@ -65,3 +65,6 @@ for line in r.iter_lines():
 # now you can get recommendations!
 # SELECT query_txt_en, sku_s, type_s, sum(event_count_i) as event_sum, avg(avg_ts_i) as avg_ts FROM acme_event_aggregations WHERE query_txt_en = 'ipad' GROUP BY query_txt_en, type_s, sku_s ORDER BY event_sum DESC LIMIT 100
 
+# now you can execute queries like this to get boosts:
+# http://localhost:8983/solr/acme_event_aggregations/select?defType=edismax&q=lcd%20tv&pf=query_txt_en&qf=query_txt_en&fl=score,*,countBoost:product(0.01,log(event_count_i)),recencyBoost:product(0.01,sqrt(log(avg_ts_i)))&debug=true&rows=100&boost=product(0.01,log(event_count_i))&boost=product(0.01,sqrt(log(avg_ts_i)))
+
