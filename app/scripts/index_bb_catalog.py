@@ -21,6 +21,11 @@ def get_text(e_name, element):
     else:
         return ""
 
+
+# clear first
+r = requests.get(delete_url)
+r = requests.get(commit_url)
+
 files = glob.glob(files_path)           # create the list of file
 for file_name in files:
     e = xml.etree.ElementTree.parse(file_name).getroot()
@@ -29,9 +34,13 @@ for file_name in files:
         doc = {}
         doc['sku_s'] = get_text('sku', product)
         doc['type_s'] = product.find('type').text
+        doc['name_s'] = product.find('name').text
         reg_price = float(product.find('regularPrice').text)
         sale_price = float(product.find('salePrice').text)
-        discount = (reg_price - sale_price) / reg_price
+        try:
+            discount = (reg_price - sale_price) / reg_price
+        except:
+            print("Unable to calculate discount")
         doc['reg_price_f'] = reg_price
         doc['sale_price_f'] = sale_price
         doc['discount_f'] = discount
@@ -46,6 +55,10 @@ for file_name in files:
         doc['thumb_image_s'] = product.find('thumbnailImage').text
         doc['large_image_s'] = product.find('largeImage').text
         doc['long_description_s'] = get_text('longDescription', product)
+
+        # keywords
+        kw = str(doc['manufacturer_s']) + ' ' + str(doc['name_s']) + ' ' + str(doc['model_number_s']) + ' ' +str(doc['short_description_s']) + ' ' + str(doc['class_s'])
+        doc['keywords_txt_en'] = kw
 
         # traverse categories
         catPath = product.find('categoryPath')
@@ -66,11 +79,3 @@ for file_name in files:
     print(r.content)
     r = requests.get(commit_url)
 
-    #doc['sku_s'] = product.attributes['sku']
-    #for e in product:
-     #   sku = e.get('sku')
-    #  print(sku)
-    '''
-    if e.tag == 'sku':
-        doc['sku_s'] = e.text
-    '''

@@ -26,7 +26,9 @@ class SolrQueryProcessor(QueryProcessor):
     def execute(self):
         for step in QueryProcessor.steps:
                 step.do_step(QueryProcessor.params)
-        return self.solr_url + "/" + self.collection + self.req_handler + "?" + QueryProcessor.params.urlencode()
+
+        r = requests.get(self.solr_url + "/" + self.collection + self.req_handler + "?" + QueryProcessor.params.urlencode())
+        return r.content
 
 
 
@@ -40,6 +42,17 @@ class QueryStepBase:
         pass
 
 
+class SetParamsStep(QueryStepBase):
+    def __init__(self, id, new_params):
+        QueryStepBase.id = id
+        self.new_params = new_params
+
+    def do_step(self, params):
+        for key in self.new_params.keys():
+            params[key] = self.new_params[key]
+
+
+
 class AddParamStep(QueryStepBase):
     def __init__(self, id, param_name, param_val):
         QueryStepBase.id = id
@@ -51,15 +64,23 @@ class AddParamStep(QueryStepBase):
 
 
 class SolrItemRecommendationBoostStep(QueryStepBase):
-    def __init__(self, id, multiplier = 1, num_recs = 100):
+    def __init__(self, id, solr_url, solr_collection, query, source_itemid_field, source_boost_field, target_boost_field, multiplier = 1):
         QueryStepBase.id = id
         self.multiplier = multiplier
-        self.num_recs = num_recs
+        self.solr_collection = solr_collection
+        self.solr_url = solr_url
+        self.query = query
+        self.source_itemid_field = source_itemid_field
+        self.source_boost_field = source_boost_field
+        self.target_boost_field = target_boost_field
+        self.url = self.solr_url + '/' + self.solr_collection + self.query
 
     def do_step(self, params):
         # here is where we query solr and get boosts
         q = params['q']
-        url = "http://localhost:8983/solr/acme_event_aggregations/select?defType=edismax&q=%s&pf=query_txt_en&qf=query_txt_en&fl=score,*,countBoost:product(0.01,log(event_count_i)),recencyBoost:product(0.01,sqrt(log(avg_ts_i))),summed:sum(product(0.01,log(event_count_i)),product(0.01,sqrt(log(avg_ts_i))))&debug=true&rows=%d&boost=sum(product(0.01,log(event_count_i)),product(0.01,sqrt(log(avg_ts_i))))&wt=json&indent=true" % (q, self.num_recs)
+        #url = "http://localhost:8983/solr/acme_event_aggregations/select?defType=edismax&q=%s&pf=query_txt_en&qf=query_txt_en&fl=score,*,countBoost:product(0.01,log(event_count_i)),recencyBoost:product(0.01,sqrt(log(avg_ts_i))),summed:sum(product(0.01,log(event_count_i)),product(0.01,sqrt(log(avg_ts_i))))&debug=true&boost=sum(product(0.01,log(event_count_i)),product(0.01,sqrt(log(avg_ts_i))))&wt=json&indent=true" % (q, self.num_recs)
+        url = self.url % (q)
+        print(url)
         r = requests.get(url)
         json = r.json()
         # append to existing bq if there is one
@@ -67,9 +88,17 @@ class SolrItemRecommendationBoostStep(QueryStepBase):
         if len(bq) > 0:
             bq = bq + " "
         for doc in json['response']['docs']:
+            item = doc[self.source_itemid_field]
+            boost = float(doc[self.source_boost_field]) * self.multiplier
+            bq = bq + "%s:%s^%f " % (self.target_boost_field, item, boost)
+
+        '''    
+        for doc in json['response']['docs']:
             sku = doc['sku_s']
             boost = doc['summed']
             bq = bq + "sku_s:%s^%f " % (sku, boost)
+        '''
+        print(bq)
         params['bq'] = bq.strip()
 
 
