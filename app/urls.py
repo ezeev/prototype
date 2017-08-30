@@ -1,5 +1,6 @@
 from django.conf.urls import url
 from django.contrib.auth import views as auth_views
+from django.contrib import admin
 from . import views, api_views
 
 
@@ -14,3 +15,7 @@ urlpatterns = [
     url(r'^api/status/$', api_views.api_status, name='status-api'),
     url(r'^api/query/$', api_views.api_query, name='query-api'),
 ]
+
+
+admin.site.site_header = "Viroonga Search Admin"
+admin.site.site_title = "Viroonga Search Admin"
